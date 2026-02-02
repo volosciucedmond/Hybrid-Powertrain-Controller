@@ -1,0 +1,9 @@
+# MATLAB temporary files
+*.autosave
+*.asv
+*.slxc
+slprj/
+*_ert_rtw/
+
+# Windows junk
+Thumbs.db
