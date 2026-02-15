@@ -1,0 +1,14 @@
+# MATLAB temporary files
+*.slxc
+*.asv
+*.m~
+slprj/
+*.mex*
+
+# Windows junk
+Thumbs.db
+
+# Python
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
