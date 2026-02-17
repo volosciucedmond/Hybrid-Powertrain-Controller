@@ -39,7 +39,7 @@ double HybridControlUnit::update(double engineForce, double brake, double soc) {
             // Logic to exit boost mode
             // To prevent chatter, only exit boost when engine load drops
             // below 5000N
-            if (engineForce < THRESHOLD_BOOST_EXIT) {
+            if (engineForce < THRESHOLD_BOOST_EXIT || soc < SOC_MIN_LIMIT) {
                 currentState = HCUState::Eco;
             }
         break;
