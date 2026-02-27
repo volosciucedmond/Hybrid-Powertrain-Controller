@@ -1,6 +1,7 @@
 % Import the F1 data for Distance-Based Lookup
 clear; clc;
 
+
 % 1. Read the CSV file
 data = readmatrix('verstappen_monza_2025.csv');
 
