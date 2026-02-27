@@ -1,60 +1,34 @@
-# Hybrid Powertrain Controller (HCU) - 2025 Monza Stress Test
 
-## The objective
-A Model-Based Design (MBD) project engineering a complete Hybrid Control Unit (HCU) from concept to C++ code generation, culminating in a stress test against real-world F1 telemetry.
 
-## Project overview
-The goal of this project was to move beyond open-loop simulation and build a supervisory control system that handles real-world constraints, energy management logic, and closed-loop validation.
+## F1 Hybrid Control Unit (HCU) – Model-Based Design & C++ Generation 🏎️
 
-The project evolved through two major iterations:
-1. **V1: Production-Ready Baseline**: Validated against standard drive cycles (FTP-75) with C++ code generation.
-2. **V2: The Monza Stress Test**: A high-fidelity performance test using 2025 F1 Monza pole telemetry to push the energy management logic to its failure points.
+### Project Overview
+This repository contains a supervisory Hybrid Control Unit (HCU) developed using a Model-Based Design (MBD) workflow. The controller manages the energy split of a Parallel P2 hybrid powertrain (ICE + MGU-K) under 2025 FIA Formula 1 Technical Regulations.
 
-## V2: The Monza Stress Test (Latest Iteration)
+The system was validated through Software-in-the-Loop (SIL) simulation against real-world telemetry from the 2025 Monza Pole Lap.
 
-**Objective**: Stress test the HCU supervisory logic against the extreme duty cycle of a competitive F1 qualifying lap.
+### Key Technical Highlights:
+- **Closed-Loop Virtual Driver:** Implemented an ADAS-style Lookahead Preview Controller to anticipate braking zones and track high-speed telemetry.
+- **Dynamic Aerodynamics:** Integrated a custom Drag Reduction System (DRS) into the plant model to simulate low-drag high-speed straights.
+- **Production Code Generation:** 100% automated generation of type-safe, Object-Oriented C++ classes using Simulink Embedded Coder (`ert.tlc`).
+- **Safety & Compliance:** Hardcoded state-machine logic for FIA-mandated limits (`120kW` power ceiling, `4.0MJ` deployment, and `2.0MJ` regeneration).
 
-**The Engineering Challenge**
-Standard drive cycles like FTP-75 prioritise efficiency. F1 requires maximum deployment. To validate the logic under extreme conditions, I integrated:
+### Software Architecture: The MBD Pivot
+In early iterations, signal noise caused high-frequency "switch chatter" in the driveline. While manual C++ refactoring initially solved this, I ultimately moved the fix to the correct abstraction layer by implementing a 500N hysteresis band directly within the Stateflow logic.
+This ensured that the generated C++ remained perfectly synchronized with the validated physics model, maintaining a single source of truth.
 
-- **2025 FIA Power Unit Regulations**: 120kW MGU-K power limit and 4MJ/lap deployment limits.
-- **Spatial Reference Environment**: Engineered a closed-loop "Virtual Driver" that tracks track position (via `cumtrapz` telemetry mapping) rather than time, preventing controller drift.
-- **Signal Conditioning**: Applied Gaussian smoothing to telemetry inputs to stabilise the PID derivative response.
+### Performance Validation (Monza Stress Test)
+The HCU was subjected to a brutal qualifying duty cycle at Monza. The Software-in-the-Loop (SIL) results confirmed the robustness of the auto-generated code:
+| Metric | Result | FIA Limit / Target |
+| --- | --- | --- |
+| Lap Time | 80.227s | 1:20.216 (Reference) |
+| Pace Delta | +1.43s | |
+| Max Deployment | 3.10 MJ | < 4.0 MJ |
+| MGU-K Regen | 2.00 MJ | 2.0 MJ (Hard Limit) |
+| Battery SoC | 90% → 53% | Safety Margin Maintained |
 
-**Key Results**
-- **Logic vs. Safety**: The HCU successfully triggered a hysteresis-guarded transition from "Boost" to "Normal" mode when SoC hit the 20% safety floor (t=5s).
-- **Performance Deficit**: The safety intervention caused a 9.52 s lap time deficit, proving that a reactive "Maximum Deployment" strategy is insufficient for competitive racing compared to predictive optimisation.
-- **Fidelity Analysis**: The 1-DOF longitudinal plant highlighted the need for dynamic aero and load-sensitive tyre friction modelling to match top-end speed and braking performance.
-
-_See `HCU_V2_Driver.slx` for the full model._
-
-## V1: Architecture & C++ Generation
-
-**Objective**: Design a robust, code-generatable controller for standard driving scenarios.
-
-**System Architecture**:
-- **Controller**: Stateflow-based supervisory logic managing torque split, Eco/Boost modes, and safety limits.
-- **Plant**: Longitudinal vehicle dynamics model (798 kg) including aerodynamic drag and battery SoC estimation.
-- **Validation**: Closed-loop PID driver model tracking the FTP-75 Driving Cycle.
-
-**Control Strategy**:
-- **Powertrain**: Hybrid system with 3000N E-Boost and -4000N regenerative braking capability.
-- **Energy Management** 
-    - **Regen Priority**: Maximises braking energy recovery
-    - **SoC Protection**: Hard limit on E-Boost at <20% SoC to prioritise pack longevity.
-- **Solver**: Fixed-step 0.001s (Discrete/Continuous hybrid) ensuring compatibility with real-time targets.
-
-## Code Generation
-The controller is isolated as an Atomic Subsystem to generate production-ready C++ code using Embedded Coder. This verifies the logic is standalone and ready for ECU deployment.
-
-## Repository Structure
-- `HCU_Driver_V2`: The advanced F1 Monza simulation model.
-- `verstappen_monza_2025.csv`: Telemetry data used for the spatial reference generation.
-- `src/`: Generated C++ code from the V1 controller.
-- `Import_F1_Data.m`: Used to import data from CSV to Workspace.
-- `maxverstappen_datacollection_monzagp_2025_pole.py`: Get telemetry data from `fastf1` to CSV.
-
-## Future work
-- Implement Predictive Energy Management (EM) to reduce the 9.52s Monza deficit.
-- Upgrade the plant model to 3-DOF (Longitudinal, Lateral, Yaw) to better capture cornering speeds.
-- Integrate thermal constraints for the battery pack.
+### Repository Structure:
+- **/3_Final_Version_F1_Monza_Code:** Contains the production-ready auto-generated `.cpp` and `.h` classes.
+- **HCU_V2_Driver.slx:** The main Simulink/Stateflow model including the vehicle plant and lookahead driver.
+- **Import_F1_Data.m:** Data processing script for FastF1 telemetry integration.
+- **From Simulation to C++.pdf:** Full engineering report detailing the design, math, and verification steps.
